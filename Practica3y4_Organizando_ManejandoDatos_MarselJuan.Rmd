@@ -261,8 +261,21 @@ Para pasar a formato _tidy_ necesitamos realizar dos operaciones en este caso. E
 ### Ejercicio 3
 
 Convierte el conjunto de datos TB en _tidy_ utilizando `gather` y `separate`.
+```{r}
+rm(list=ls())
+load("./data/tb.Rdata")
+```
+
 
 ```{r}
+load("./data/tb.Rdata")
+raw_t <- raw %>% gather(key = "hola", value = "casos", -country, -year)
+head(raw_t)
+
+raw_t_t <- raw_t %>% separate("hola", into=c("sexo", "edad"), sep=1) #sep =1 para que separe despues del primer caractyer
+head(raw_t_t)
+
+
 
 ```
 
