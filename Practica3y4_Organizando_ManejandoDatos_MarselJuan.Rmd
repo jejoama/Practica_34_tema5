@@ -362,7 +362,8 @@ Vamos a cargar el conjunto de datos ``VuelosNY.Rdata`` que contiene dos data fra
 ```{r, include=FALSE}
 
 library(dplyr)
-#library(dbplyr)
+library(stringr)
+library(dbplyr)
 rm(list=ls())
 load("./data/VuelosNY.Rdata")
 
@@ -376,7 +377,9 @@ planes.f <- planes %>% filter(str_detect(str_to_lower(manufacturer),".*douglas.*
 Muestra las primeras muestras de ambos data frames para hacerte una idea de las variables que contienen. ¿Qué diferencia existe entre la información mostrada en ambos data frames?
 
 ```{r }
-flights.f <- flights %>% select(time_hour, starts_with())
+head(flights)
+head(planes)
+
 
 ```
 
@@ -387,7 +390,24 @@ En nuestro estudio queremos aplicar una serie de criterios de exclusión sobre l
 * Nota: Revisar el uso de la función filter vista en clase y tener en cuenta los operadores de comparación: igual ==, distinto !=, mayor >, mayor o igual >=, menor <, menor o igual <=.
 
 ```{r }
+library(dplyr)
+library(stringr)
 
+planes.f <- planes %>%
+  #  eliminar aviones de McDonnell Douglas
+  filter(!str_detect(str_to_lower(manufacturer), "mcdonnell\\s*douglas")) %>%
+  
+  # filtrar
+  filter(seats >= 90 & seats <= 210) %>%
+  
+
+  mutate(manufacturer = ifelse(
+    str_detect(str_to_lower(manufacturer), "airbus"),
+    "AIRBUS COMP",
+    manufacturer
+  ))
+
+planes.f
 
 
 ```
@@ -399,6 +419,7 @@ Crea un data frame denominado `flights.f` que contenga los vuelos que involucren
 
 ```{r }
 flights.f <- flights %>% inner_join(planes.f %>% select(tailnum), by="tailnum")
+flights.f
 
 ```
 
@@ -407,6 +428,10 @@ flights.f <- flights %>% inner_join(planes.f %>% select(tailnum), by="tailnum")
 Reasigna los nombres de los data frames `planes.f` y `flights.f` a los nombres originales  `planes` y `flights`.
 
 ```{r }
+planes <- planes.f
+flights <- flights.f
+flights
+planes
 
 ```
 
@@ -419,6 +444,10 @@ Existen variables que, a priori, no tienen demasiado interés para el estudio qu
 * En el data frame  `planes` quédate con todas las variables excepto `speed` y `type`.
 
 ```{r }
+flightsm <- flights %>% select(-time_hour, -ends_with("time"))
+planesm <- planes %>% select(-speed, -type)
+
+flightsm
 
 ```
 
@@ -427,8 +456,13 @@ Existen variables que, a priori, no tienen demasiado interés para el estudio qu
 Incorpora una nueva variable a `flights` denominado `Full_Date` que sea de tipo `character` que incorpore una cadena de texto de la forma `d-m-Y`. Donde `d` indica día, `m` mes e `Y` año, a partir de la información incluida en el data frame. Utiliza una función de **DPLYR** que permita conseguir este propósito. Elimina las variables originales involucradas en la creación de la nueva variable.
 
 ```{r }
+library(dplyr)
 
+flights_add <- flightsm %>%
+  mutate(Full_Date = paste(day, month, year, sep = "-")) %>%
+  select(-year, -month, -day)
 
+flights_add
 ```
 
 ### Ejercicio 11
@@ -437,7 +471,19 @@ Utilizando las funciones `group_by`, `summarise` y `filter`, crea un data frame 
 
 ```{r }
 
-agregado <- flights %>% group_by(tailnum) %>% summarise(Num_flights = n(), Mean_distance = mean(distance), total_distance=sum(distance))
+library(dplyr)
+
+Distances_plane <- flights %>%
+  filter(!is.na(tailnum)) %>%                     # Eliminar registros con tailnum NA
+  group_by(tailnum) %>%                           # Agrupar por avión
+  summarise(
+    Num_flights = n(),                            # Número de vuelos
+    Mean_distance = mean(distance, na.rm = TRUE), # Distancia media
+    Total_distance = sum(distance, na.rm = TRUE)  # Distancia total
+  )
+
+
+#agregado <- flights %>% group_by(tailnum) %>% summarise(Num_flights = n(), Mean_distance = mean(distance), total_distance=sum(distance))
 
 ```
 
