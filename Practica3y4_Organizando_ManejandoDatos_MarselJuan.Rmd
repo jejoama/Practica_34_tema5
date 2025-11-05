@@ -188,7 +188,8 @@ Este conjunto de datos tiene en realidad tres variables, que deberían estar en 
 Para ver la utilidad de organizar los datos en formato _tidy_, imagina que quisieramos realizar un gráfico donde se mostrará la cantidad de gente por cada intervalo de ingresos:
 
 ```{r echo=FALSE}
-
+library(tidyr)
+library(ggplot2)
 gather(pew_religion, income, cases, -religion, factor_key=T) %>%
   ggplot(aes(income, cases)) + geom_col() +
   theme(axis.text.x=element_text(hjust=1, angle=45))
@@ -205,6 +206,15 @@ Para convertir este conjunto a formato _tidy_ tendremos que agrupar todas las co
 ### Ejercicio 1
 
 Convierte el dataset `pew_religion` a formato _tidy_ usando `gather`. La columna `income` debe contener una variable de tipo `factor`.
+```{r}
+load("data/pew_religion.RData")
+head(pew_religion)
+```
+```{r}
+pew_t <- pew_religion %>% gather(key = "income", value="freq", -religion) 
+pew_t
+```
+
 
 ```{r}
 library(tidyr)
@@ -233,11 +243,16 @@ Para obtener la versión _tidy_  hemos de juntar todas las columnas desde `wk1` 
 Obtén la versión _tidy_ de este conjunto de datos usando `pivot_longer`.
 
 Consejo: puedes eliminar el prefijo `wk` de las semanas mediante el argumento `names_prefix`. Opcionalmente puedes crear una columna `date` a partir de `date.entered`, sumando las semanas transcurridas desde la fecha de entrada en lista.
+```{r}
+load("data/billboard.RData")
+bill_100 <- billboard %>% pivot_longer(names_to = "week", values_to = "rank", starts_with("wk"), names_prefix = "wk") %>% mutate(data=date.entered)
+bill_100
+```
 
 
 
 ```{r}
-
+library(dplyr)
 billboard_t <- billboard %>% pivot_longer(starts_with("wk"), names_prefix = "wk", names_to="week", values_to="rank") %>% mutate(data=date.entered)
 
 billboard_t
@@ -264,6 +279,9 @@ Convierte el conjunto de datos TB en _tidy_ utilizando `gather` y `separate`.
 ```{r}
 rm(list=ls())
 load("./data/tb.Rdata")
+
+tbb <- raw %>% gather(key="m_f", value="casos", -country, -year) %>% separate(col = "m_f", into=c("sexo", "edad"), sep=1)
+tbb
 ```
 
 
@@ -297,14 +315,20 @@ Para obtener la versión _tidy_ primero juntamos todos los días en una variable
 
 Obtén la versión _tidy_ del conjunto de datos `weather` utilizando las funciones `pivot_longer` y `pivot_wider`. Además cambiaremos las columnas `year`, `month` y `dia` por una única variable `fecha`. Para que la operación `pivot_wider` no de error tendremos que eliminar los NA's cuando usemos `pivot_longer`.
 
-```{r}
-weather_t <- weather %>% pivot_longer(cols = starts_with("d"), names_to = "dia", values_to = "valor",values_drop_na = TRUE) %>% pivot_wider(names_from="element", values_from = "dia") %>% mutate()
 
+
+```{r}
+load('data/weather.Rdata')
+
+hey <- raw %>% pivot_longer(cols=starts_with("d"), names_to = "dia", values_to = "valor", values_drop_na = T) %>% pivot_wider(names_from = "element", values_from = "valor") %>% unite(col= "fecha","year", "month", "dia")
+hey
 
 
 
 ```
 
+
+help(unite)
 
 # DPLYR 
 
